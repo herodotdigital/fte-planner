@@ -52,6 +52,14 @@ services:
       - key: AUTH_TRUST_HOST
         value: "true"
 
+      # Adres bazowy wpisany wprost. Samo AUTH_TRUST_HOST okazało się
+      # niewystarczające: po zalogowaniu Auth.js odsyłał na https://localhost:10000,
+      # czyli na wewnętrzny adres kontenera, więc sesja powstawała, ale
+      # przeglądarka trafiała donikąd. Wartość wynika z nazwy serwisu powyżej —
+      # zmieniając jedno, trzeba zmienić drugie.
+      - key: AUTH_URL
+        value: https://fte-planner-render.onrender.com
+
       - key: NODE_VERSION
         value: "22"
 
