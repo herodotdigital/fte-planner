@@ -22,7 +22,14 @@ services:
     # więc powtórne wdrożenie bez nowych migracji nic nie robi.
     # Zasiew danych demo wchodzi tylko wtedy, gdy baza jest pusta — inaczej
     # każde kolejne wdrożenie kasowałoby to, co testerzy zdążyli wyklikać.
-    buildCommand: npm ci && npx prisma migrate deploy && node prisma/seed-if-empty.mjs && npm run build
+    #
+    # ALLOW_DEMO_SEED=1 zdejmuje blokadę, którą `seed-demo.mjs` stawia na
+    # bazach innych niż lokalna. Blokada jest słuszna: dane demo zawierają
+    # administratora ze znanym hasłem. Tutaj przełamujemy ją świadomie, bo to
+    # jest właśnie instancja do przeklikania — z wymyślonymi ludźmi i hasłem
+    # podanym w DEMO_PASSWORD. Na instancji z prawdziwymi danymi tej flagi
+    # ustawiać NIE WOLNO.
+    buildCommand: npm ci && npx prisma migrate deploy && ALLOW_DEMO_SEED=1 node prisma/seed-if-empty.mjs && npm run build
     startCommand: npm run start
 
     # Strona logowania jest publiczna i nie dotyka bazy — nadaje się na

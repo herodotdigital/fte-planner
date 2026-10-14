@@ -367,7 +367,7 @@ const dbHost = (() => {
 if (!["localhost", "127.0.0.1", "::1"].includes(dbHost) && process.env.ALLOW_DEMO_SEED !== "1") {
   console.error(
     `⛔ Odmowa: DATABASE_URL wskazuje na „${dbHost || "?"}", a nie na bazę lokalną.\n` +
-      "   Dane demo zawierają konto administratora z hasłem Demo1234.\n" +
+      "   Dane demo zawierają konto administratora ze znanym hasłem.\n" +
       "   Jeśli na pewno chcesz je wgrać, uruchom z ALLOW_DEMO_SEED=1."
   );
   process.exit(1);
