@@ -63,7 +63,9 @@ test("definicja roli + przypisanie osoby → obsada widoczna", async ({ page }) 
   // kosztów, więc celujemy wprost w sekcję zapotrzebowania na role.
   const obsada = page.locator('[data-section="staffing"]');
   await expect(obsada.getByText(employeeName)).toBeVisible();
-  await expect(obsada.getByText("0.7 FTE")).toBeVisible();
+  // FTE jest wyświetlane polskim zapisem, z przecinkiem i dwoma miejscami
+  // (`formatFte`), więc "0.7" nigdy się tu nie pojawi.
+  await expect(obsada.getByText("0,70 FTE")).toBeVisible();
 });
 
 test("2×0.7 na nakładających się rolach → konflikt widoczny na liście projektów", async ({
@@ -73,7 +75,12 @@ test("2×0.7 na nakładających się rolach → konflikt widoczny na liście pro
   await addRole(page, "Backend");
   await assignLast(page, "0.7"); // ta sama osoba, ten sam okres → suma 1.4
 
-  await page.goto("/app/projekty");
+  // Lista dociąga się po nawigacji; bez odczekania na jej nagłówek asercja
+  // odpytuje DOM sprzed renderu i kończy się „element not found", mimo że
+  // konflikt jest poprawnie wyliczony.
+  await page.goto("/app/projekty", { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Projekty" })).toBeVisible();
+
   const row = page.getByRole("row", { name: new RegExp(projectAName) });
   await expect(row.locator('[aria-label*="Konflikt FTE"]')).toBeVisible();
 });
