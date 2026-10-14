@@ -62,6 +62,7 @@ model User {
   assignments         Assignment[]
   passwordResetTokens PasswordResetToken[]
   rates               EmployeeRate[]
+  timeEntries         TimeEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +159,7 @@ model ProjectRole {
   requiredPeople Int?
 
   assignments Assignment[]
+  timeEntries TimeEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -350,4 +352,60 @@ model AuditEvent {
 
   @@index([at])
   @@index([targetUserId])
+}
+
+// ---------------------------------------------------------------------------
+// Rzeczywisty czas pracy
+
+/// Na co poszedł czas. Kategorie nieprojektowe nie mają roli i nie wchodzą do
+/// kosztu projektu, ale są potrzebne, żeby dzień się domykał — bez nich urlop
+/// wyglądałby jak dzień, w którym nikt nic nie zrobił.
+enum TimeCategory {
+  project
+  leave
+  sick
+  other
+}
+
+/// Skąd wpis pochodzi. Dziś zawsze ręczny; pole istnieje od początku, żeby
+/// import z Jiry dało się dopiąć bez migracji danych.
+enum TimeSource {
+  manual
+  jira
+}
+
+/// Godziny faktycznie przepracowane w danym dniu. Odrębne od Assignment, bo
+/// plan i wykonanie to dwie różne rzeczy — cała wartość tej warstwy polega na
+/// tym, że można je porównać.
+model TimeEntry {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Rola, na którą księgowany jest czas. null dla wpisów nieprojektowych.
+  // SetNull, a nie Cascade: skasowanie roli nie może wymazać informacji, że
+  // ktoś te godziny faktycznie przepracował.
+  projectRoleId String?
+  projectRole   ProjectRole? @relation(fields: [projectRoleId], references: [id], onDelete: SetNull)
+
+  date     DateTime     @db.Date
+  hours    Decimal      @db.Decimal(5, 2)
+  category TimeCategory @default(project)
+  note     String?
+
+  source     TimeSource @default(manual)
+  /// Identyfikator w systemie źródłowym — klucz idempotencji przy imporcie.
+  externalId String?
+
+  /// Kto wpisał. Platforma jest kierowana do menedżerów, więc to zwykle nie
+  /// jest ta sama osoba, której czas dotyczy.
+  createdById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([source, externalId])
+  @@index([userId, date])
+  @@index([projectRoleId])
+  @@index([date])
 }

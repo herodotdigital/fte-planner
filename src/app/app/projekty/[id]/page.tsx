@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ymd } from "@/lib/timeline";
 import { requireCapability } from "@/lib/session";
+import { monthsCovered } from "@/lib/period";
+import { compareMonths, summarize } from "@/lib/timesheet";
 import { can } from "@/lib/permissions";
 import {
   assignmentCostWithRates,
@@ -33,6 +35,7 @@ import { AttachmentList } from "./_components/attachment-list";
 import { StaffingSection } from "./_components/staffing-section";
 import { ProjectLinks } from "./_components/project-links";
 import { ProjectCosts } from "./_components/project-costs";
+import { PlanVsActual } from "./_components/plan-vs-actual";
 
 export async function generateMetadata({
   params,
@@ -253,6 +256,44 @@ export default async function ProjectDetailPage({
     };
   }
 
+  // --- Plan vs wykonanie ---------------------------------------------------
+  const roleIds = project.roles.map((r) => r.id);
+  const timeEntries = roleIds.length
+    ? await prisma.timeEntry.findMany({
+        where: { projectRoleId: { in: roleIds } },
+        select: { date: true, hours: true, category: true },
+      })
+    : [];
+
+  const plannedAssignments = project.roles.flatMap((r) =>
+    r.assignments.map((a) => ({
+      startDate: a.startDate,
+      endDate: a.endDate,
+      fte: Number(a.fte),
+    }))
+  );
+
+  // Oś miesięcy bierzemy z ról, nie z przydziałów: miesiąc, na który ktoś
+  // zaraportował czas bez zaplanowanej obsady, ma się pokazać jako "bez planu",
+  // a nie zniknąć z zestawienia.
+  const comparisonMonths = [
+    ...new Set([
+      ...project.roles.flatMap((r) => monthsCovered(r.startDate, r.endDate)),
+      ...timeEntries.map((e) => `${e.date.getUTCFullYear()}-${String(e.date.getUTCMonth() + 1).padStart(2, "0")}`),
+    ]),
+  ].sort();
+
+  const comparison = compareMonths(
+    comparisonMonths,
+    plannedAssignments,
+    timeEntries.map((e) => ({
+      date: e.date,
+      hours: Number(e.hours),
+      category: e.category,
+    }))
+  );
+  const comparisonSummary = summarize(comparison);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-4">
@@ -315,6 +356,10 @@ export default async function ProjectDetailPage({
           items={costs.items}
           summary={costs.summary}
         />
+      )}
+
+      {comparison.length > 0 && (
+        <PlanVsActual months={comparison} summary={comparisonSummary} />
       )}
 
       <ProjectLinks links={project} />
