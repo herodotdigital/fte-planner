@@ -9,7 +9,9 @@
 
 services:
   - type: web
-    name: fte-planner
+    # Nazwa wyznacza adres (<nazwa>.onrender.com), więc trzymamy tę, pod którą
+    # aplikacja już była pokazywana.
+    name: fte-planner-render
     runtime: node
     region: frankfurt
     plan: free
