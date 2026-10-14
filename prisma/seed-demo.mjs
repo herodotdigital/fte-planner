@@ -70,7 +70,10 @@ const MONTH_END_SQL = (p) =>
 // dostępnym wdrożeniu byłaby zaproszeniem dla każdego, kto trafi na adres —
 // tym bardziej że repozytorium jest publiczne i ta wartość jest w nim wprost.
 // Dlatego na Render ustawiamy DEMO_PASSWORD w zmiennych środowiskowych.
-const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "Demo1234";
+// Pusty ciąg traktujemy jak brak wartości: Render wstawia "" dla zmiennej,
+// której nikt nie wypełnił, a `??` by go przepuścił i zasiał konta z pustym
+// hasłem — nie do odgadnięcia i nie do naprawienia bez czyszczenia bazy.
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD?.trim() || "Demo1234";
 
 // --- Obsada: kto, gdzie, na jakim FTE ---------------------------------------
 // Zakresy są dobrane tak, aby pokaz obejmował wszystkie stany interfejsu:
