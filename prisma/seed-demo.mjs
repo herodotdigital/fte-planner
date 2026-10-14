@@ -66,7 +66,11 @@ const MONTH_START_SQL = (p) => `to_date(${p} || '-01', 'YYYY-MM-DD')`;
 const MONTH_END_SQL = (p) =>
   `(to_date(${p} || '-01', 'YYYY-MM-DD') + INTERVAL '1 month' - INTERVAL '1 day')::date`;
 
-const DEMO_PASSWORD = "Demo1234";
+// Hasło kont demonstracyjnych. Lokalnie wygodna stała, ale na publicznie
+// dostępnym wdrożeniu byłaby zaproszeniem dla każdego, kto trafi na adres —
+// tym bardziej że repozytorium jest publiczne i ta wartość jest w nim wprost.
+// Dlatego na Render ustawiamy DEMO_PASSWORD w zmiennych środowiskowych.
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? "Demo1234";
 
 // --- Obsada: kto, gdzie, na jakim FTE ---------------------------------------
 // Zakresy są dobrane tak, aby pokaz obejmował wszystkie stany interfejsu:
@@ -586,7 +590,7 @@ try {
   console.log(`   Projekty:     ${PROJECTS.length}`);
   console.log(`   Przydziały:   ${createdAssignments.length} (konfliktowe: ${conflicts})`);
   console.log("");
-  console.log("   Logowanie (hasło dla wszystkich kont demo: Demo1234):");
+  console.log(`   Logowanie (hasło dla wszystkich kont demo: ${DEMO_PASSWORD}):`);
   console.log("     admin@demo.pl        — administrator");
   console.log("     kadry@demo.pl        — administracja (słowniki i stawki)");
   console.log("     manager@demo.pl      — menedżer");

@@ -18,7 +18,9 @@ services:
     # Migracje idą przed budowaniem, w jednym kroku z instalacją. Render ma na
     # tym etapie dostęp do DATABASE_URL, a `migrate deploy` jest idempotentny,
     # więc powtórne wdrożenie bez nowych migracji nic nie robi.
-    buildCommand: npm ci && npx prisma migrate deploy && npm run build
+    # Zasiew danych demo wchodzi tylko wtedy, gdy baza jest pusta — inaczej
+    # każde kolejne wdrożenie kasowałoby to, co testerzy zdążyli wyklikać.
+    buildCommand: npm ci && npx prisma migrate deploy && node prisma/seed-if-empty.mjs && npm run build
     startCommand: npm run start
 
     # Strona logowania jest publiczna i nie dotyka bazy — nadaje się na
@@ -43,6 +45,13 @@ services:
 
       - key: NODE_VERSION
         value: "22"
+
+      # Hasło kont demonstracyjnych. `sync: false` znaczy „ustaw ręcznie w
+      # panelu" — wartość NIE trafia do repozytorium. Jest to konieczne, bo
+      # repozytorium firmowe jest publiczne, a wdrożenie dostępne z internetu:
+      # hasło zapisane w kodzie wpuściłoby na UAT dowolną osobę z adresem.
+      - key: DEMO_PASSWORD
+        sync: false
 
       # APP_URL celowo nie jest tu ustawiony. Dopóki go nie ma, aplikacja bierze
       # RENDER_EXTERNAL_URL, czyli działa od pierwszego wdrożenia. Ustaw go

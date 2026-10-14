@@ -6,17 +6,40 @@ dane osobowe pracowników, więc zostają w Unii Europejskiej.
 
 ## Pierwsze uruchomienie
 
-1. W Render: **New → Blueprint**, wskaż repozytorium `adrianczyrek-herodot/fte-planner`.
+1. W Render: **New → Blueprint**, wskaż repozytorium.
 2. Zatwierdź plan z `render.yaml`. Powstaną dwie rzeczy: serwis `fte-planner`
    i baza `fte-planner-db`.
-3. Poczekaj na pierwsze wdrożenie. Migracje Prismy wykonają się same, jako część
-   budowania.
-4. Wejdź na `/register` i załóż konto. **Pierwsze konto na pustej bazie
-   automatycznie dostaje rolę administratora i jest od razu aktywne** — każde
-   kolejne czeka na zatwierdzenie.
+3. Render poprosi o jedną wartość: **`DEMO_PASSWORD`**. Wpisz coś losowego i
+   zachowaj — tym hasłem logują się wszystkie konta demonstracyjne. Nie jest
+   zapisane w repozytorium, bo wdrożenie jest dostępne z internetu.
+4. Poczekaj na pierwsze wdrożenie. Migracje Prismy i zasiew danych wykonają się
+   same, jako część budowania.
+5. Zaloguj się jako `admin@demo.pl` hasłem z punktu 3.
 
 `DATABASE_URL` i `AUTH_SECRET` wypełnią się same: pierwszy z bazy, drugi
 wygeneruje Render. Nie trzeba ich nigdzie wpisywać ani nigdzie przechowywać.
+
+## Dane do przeklikania
+
+Pierwsze wdrożenie dostaje komplet danych demonstracyjnych: 11 kont we
+wszystkich rolach, 4 projekty, 9 ról i 9 przydziałów — dobranych tak, by pokryć
+wszystkie stany interfejsu, łącznie z konfliktem obłożenia, niedoborem obsady i
+kontem oczekującym na zatwierdzenie. To wymyśleni ludzie; żadnych prawdziwych
+pracowników tu nie ma i nie powinno być.
+
+Zasiew wchodzi **tylko wtedy, gdy baza jest pusta** ([`seed-if-empty.mjs`](prisma/seed-if-empty.mjs)).
+Każde kolejne wdrożenie zostawia stan, jaki zastało — inaczej push poprawki
+kasowałby wszystko, co testerzy zdążyli wyklikać.
+
+Konta do rozdania testerom:
+
+| Konto | Rola |
+| --- | --- |
+| `admin@demo.pl` | administrator — widzi wszystko |
+| `manager@demo.pl` | menedżer — projekty i obsada, bez stawek |
+| `kadry@demo.pl` | administracja — słowniki i stawki |
+| `m.nowak@test.com` | pracownik — ma konflikt obłożenia |
+| `oczekujacy@test.com` | konto oczekujące → ekran `/pending` |
 
 ## Czego to wdrożenie NIE załatwia
 
