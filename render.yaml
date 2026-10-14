@@ -1,0 +1,59 @@
+# Wdrożenie na Render jako kod (Blueprint).
+#
+# Region: Frankfurt. Aplikacja trzyma imiona, nazwiska, stawki i ewidencję
+# czasu pracy, więc dane zostają w Unii Europejskiej — to decyzja prawna, nie
+# wydajnościowa, i nie należy jej zmieniać bez przemyślenia.
+#
+# Pierwsze uruchomienie: Render → New → Blueprint → wskaż to repozytorium.
+# Baza i serwis powstaną razem, a DATABASE_URL i AUTH_SECRET wypełnią się same.
+
+services:
+  - type: web
+    name: fte-planner
+    runtime: node
+    region: frankfurt
+    plan: free
+    branch: staging
+
+    # Migracje idą przed budowaniem, w jednym kroku z instalacją. Render ma na
+    # tym etapie dostęp do DATABASE_URL, a `migrate deploy` jest idempotentny,
+    # więc powtórne wdrożenie bez nowych migracji nic nie robi.
+    buildCommand: npm ci && npx prisma migrate deploy && npm run build
+    startCommand: npm run start
+
+    # Strona logowania jest publiczna i nie dotyka bazy — nadaje się na
+    # sprawdzanie, czy serwis żyje, lepiej niż cokolwiek za autoryzacją.
+    healthCheckPath: /login
+
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fte-planner-db
+          property: connectionString
+
+      # Sekret sesji generuje Render — nie trafia do repozytorium ani do
+      # niczyjej historii poleceń.
+      - key: AUTH_SECRET
+        generateValue: true
+
+      # Za odwrotnym proxy Auth.js musi ufać nagłówkowi hosta, inaczej
+      # przekierowania po zalogowaniu lecą na zły adres.
+      - key: AUTH_TRUST_HOST
+        value: "true"
+
+      - key: NODE_VERSION
+        value: "22"
+
+      # APP_URL celowo nie jest tu ustawiony. Dopóki go nie ma, aplikacja bierze
+      # RENDER_EXTERNAL_URL, czyli działa od pierwszego wdrożenia. Ustaw go
+      # ręcznie dopiero przy własnej domenie.
+
+      # BLOB_READ_WRITE_TOKEN — magazyn załączników. Bez niego cała aplikacja
+      # działa, nie da się tylko dodawać i pobierać plików przy projektach.
+
+databases:
+  - name: fte-planner-db
+    databaseName: fte_planner
+    user: fte_planner
+    region: frankfurt
+    plan: free

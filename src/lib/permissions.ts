@@ -68,3 +68,20 @@ export function can(role: Role, capability: Capability): boolean {
 export function capabilitiesOf(role: Role): Capability[] {
   return [...MATRIX[role]];
 }
+
+/**
+ * Rola i status nadawane przy rejestracji.
+ *
+ * Pierwsze konto na pustej bazie musi być aktywnym administratorem, bo inaczej
+ * świeże wdrożenie jest zablokowane: rejestracja tworzy konto „oczekujące", a
+ * nie ma nikogo, kto mógłby je zatwierdzić. Warunek działa tylko wtedy, gdy w
+ * bazie nie ma ani jednego użytkownika, więc nie da się go wykorzystać później.
+ */
+export function signupDefaults(existingUserCount: number): {
+  role: Role;
+  status: "approved" | "pending";
+} {
+  return existingUserCount === 0
+    ? { role: "admin", status: "approved" }
+    : { role: "user", status: "pending" };
+}

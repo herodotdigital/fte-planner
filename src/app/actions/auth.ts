@@ -8,6 +8,7 @@ import * as z from "zod";
 import { signIn, signOut, PendingApprovalError, AccountInactiveError } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { emailLookup } from "@/lib/validation/email";
+import { signupDefaults } from "@/lib/permissions";
 import {
   LoginFormSchema,
   LoginFormState,
@@ -39,18 +40,21 @@ export async function signup(
 
   const passwordHash = await bcrypt.hash(password, 12);
 
+  const defaults = signupDefaults(await prisma.user.count());
+
   await prisma.user.create({
     data: {
       email,
       passwordHash,
       firstName,
       lastName,
-      role: "user",
-      status: "pending",
+      role: defaults.role,
+      status: defaults.status,
     },
   });
 
-  redirect("/pending");
+  // Pierwszy administrator jest od razu aktywny, więc nie ma na co czekać.
+  redirect(defaults.status === "approved" ? "/login" : "/pending");
 }
 
 export async function login(

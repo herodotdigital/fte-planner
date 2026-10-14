@@ -26,8 +26,16 @@ export async function sendMail({ to, subject, body }: MailMessage): Promise<void
   );
 }
 
+/**
+ * Adres, od którego budujemy linki w mailach (zaproszenie, reset hasła).
+ *
+ * RENDER_EXTERNAL_URL jest wstrzykiwany przez Render i działa od pierwszego
+ * wdrożenia, zanim ktokolwiek zdąży ustawić APP_URL ręcznie. Jawnie ustawiony
+ * APP_URL ma pierwszeństwo, bo przy własnej domenie to on jest prawdą.
+ */
 function appUrl(): string {
-  return process.env.APP_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  const configured = process.env.APP_URL ?? process.env.RENDER_EXTERNAL_URL;
+  return configured?.replace(/\/$/, "") ?? "http://localhost:3000";
 }
 
 export async function sendPasswordSetupEmail(

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { can, capabilitiesOf, CAPABILITIES, ROLES, type Role } from "./permissions";
+import {
+  can,
+  capabilitiesOf,
+  CAPABILITIES,
+  ROLES,
+  signupDefaults,
+  type Role,
+} from "./permissions";
 
 describe("macierz uprawnień", () => {
   it("każda rola ma zdefiniowany zestaw uprawnień", () => {
@@ -45,5 +52,18 @@ describe("macierz uprawnień", () => {
       expect(can(role, "viewRates")).toBe(false);
       expect(can(role, "manageRates")).toBe(false);
     }
+  });
+});
+
+describe("signupDefaults", () => {
+  it("pierwsze konto na pustej bazie zostaje aktywnym administratorem", () => {
+    // Bez tego świeże wdrożenie jest zablokowane: nie ma kogo poprosić
+    // o zatwierdzenie pierwszego konta.
+    expect(signupDefaults(0)).toEqual({ role: "admin", status: "approved" });
+  });
+
+  it("każde kolejne konto czeka na zatwierdzenie", () => {
+    expect(signupDefaults(1)).toEqual({ role: "user", status: "pending" });
+    expect(signupDefaults(42)).toEqual({ role: "user", status: "pending" });
   });
 });
